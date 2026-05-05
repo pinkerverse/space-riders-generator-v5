@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Space Riders Tiny Generator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+margin:0;
+font-family:'Orbitron', sans-serif;
+background: radial-gradient(circle at top, #1e293b, #020617);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.container{
+width:100%;
+max-width:540px;
+background:#0f172a;
+padding:25px;
+border-radius:18px;
+box-shadow:0 0 40px rgba(0,0,0,0.7);
+text-align:center;
+}
+
+h1{
+margin:10px 0;
+font-size:24px;
+}
+
+input{
+padding:12px;
+font-size:14px;
+width:90%;
+border-radius:10px;
+border:none;
+outline:none;
+margin-top:10px;
+}
+
+button{
+padding:10px 16px;
+margin:8px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-size:13px;
+background:linear-gradient(135deg,#6366f1,#22d3ee);
+color:white;
+transition:0.2s;
+}
+
+button:hover{
+transform:scale(1.05);
+box-shadow:0 0 12px #22d3ee;
+}
+
+button:disabled{
+opacity:0.5;
+cursor:not-allowed;
+}
+
+.canvasWrapper{
+position:relative;
+margin-top:20px;
+display:flex;
+justify-content:center;
+}
+
+.placeholder{
+width:100%;
+max-width:420px;
+height:420px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#111827;
+border-radius:12px;
+opacity:0.7;
+}
+
+#finalImage{
+position:absolute;
+top:0;
+left:50%;
+transform:translateX(-50%);
+width:100%;
+max-width:420px;
+border-radius:12px;
+display:none;
+opacity:0;
+transition:opacity 0.5s ease, transform 0.4s ease;
+}
+
+#finalImage.active{
+transform:translateX(-50%) scale(1.02);
+box-shadow:0 0 40px rgba(34,211,238,0.35);
+}
+
+.loading{
+position:absolute;
+top:0;
+left:50%;
+transform:translateX(-50%);
+width:100%;
+max-width:420px;
+height:420px;
+background:rgba(0,0,0,0.7);
+border-radius:12px;
+display:none;
+align-items:center;
+justify-content:center;
+z-index:4;
+}
+
+.spinner{
+border:4px solid rgba(255,255,255,0.2);
+border-top:4px solid #22d3ee;
+border-radius:50%;
+width:40px;
+height:40px;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+100%{transform:rotate(360deg);}
+}
+
+.tapHint{
+margin-top:10px;
+font-size:12px;
+opacity:0;
+}
+
+.tapHint.show{
+animation:fadeHint 2s ease;
+}
+
+@keyframes fadeHint{
+50%{opacity:0.9;}
+}
+
+@keyframes walletGlow {
+
+0%{
+box-shadow:0 0 6px rgba(34,211,238,0.2);
+transform:scale(1);
+}
+
+50%{
+box-shadow:
+0 0 18px rgba(34,211,238,0.8),
+0 0 30px rgba(34,211,238,0.4);
+transform:scale(1.03);
+}
+
+100%{
+box-shadow:0 0 6px rgba(34,211,238,0.2);
+transform:scale(1);
+}
+
+}
+
+.wallet{
+font-family:'JetBrains Mono', monospace;
+margin-top:15px;
+font-size:18px;
+font-weight:600;
+color:#22d3ee;
+background:rgba(34,211,238,0.08);
+padding:10px 14px;
+border-radius:10px;
+display:inline-block;
+cursor:pointer;
+
+/* ✨ glow base */
+box-shadow:0 0 8px rgba(34,211,238,0.3);
+
+/* ✨ animation */
+animation:walletGlow 2.5s ease-in-out infinite;
+}
+
+canvas{display:none;}
+
+select{
+margin:4px;
+padding:8px;
+border-radius:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🚀 Space Riders Generator</h1>
+
+<input id="nftInput" placeholder="NFT ID or OpenSea link">
+
+<br>
+
+<button id="genBtn" onclick="generate()">Generate</button>
+<button onclick="randomRider()">Random</button>
+
+<hr style="margin:20px 0; opacity:0.2;">
+
+<h3>Create Your Own Rider</h3>
+
+<select id="background"></select>
+<select id="body"></select>
+<select id="head"></select>
+<select id="eyes"></select>
+<select id="mouth"></select>
+<select id="hat"></select>
+<select id="glasses"></select>
+<select id="space_shine"></select>
+
+<br>
+
+<button onclick="generateCustom()">Create Rider</button>
+
+<div class="canvasWrapper">
+
+<div class="placeholder">
+Your Space Rider will appear here 🚀
+</div>
+
+<img id="finalImage">
+
+<div id="loading" class="loading">
+<div class="spinner"></div>
+</div>
+
+</div>
+
+<div id="hint" class="tapHint">
+📱 Tap & hold image to save
+</div>
+
+<br>
+
+<button onclick="download()">Download</button>
+<button onclick="toggleBackground()">Toggle Background</button>
+<br><br>
+
+<select id="special_bg_select">
+<option value="">Select Special Background</option>
+</select>
+
+<button onclick="applySpecialBackground()">Apply Special Background</button>
+<br><br>
+
+<select id="overlay_select">
+<option value="">Select Overlay</option>
+</select>
+
+<button onclick="applyOverlay()">Apply Overlay</button>
+
+  <br><br>
+
+<select id="nhl_select">
+<option value="">Select NHL Team</option>
+</select>
+
+<button onclick="applyNHL()">Apply NHL Team</button>
+
+<div class="wallet">
+Support: pinkerverse.eth
+</div>
+
+</div>
+
+<script>
+
+/* ===== FULL TRAITS ===== */
+
+const TRAITS = {
+
+background:[
+"white","red_deluxe","green","ultramarine","blue","orange","solar_flare",
+"light_purple_deluxe","light_purple","old_legendary","blank_space","purple",
+"yellow","aquamarine","purple_deluxe","red","pink_deluxe","emerald",
+"ultramarine_deluxe","light_pink_deluxe","starry_night","pink","orange_deluxe",
+"celestial_purple_void","blue_deluxe","celestial_emerald","aquamarine_deluxe",
+"diamond","sn_2021","green_deluxe","blood_moon","celestial_solar_flare",
+"light_pink","sn_2022","yellow_deluxe","moonlight","deep_night","sn_2929",
+"celestial_moonlight","celestial_void","celestial_diamond",
+"celestial_blood_moon","flat_legendary"
+],
+
+body:[
+"sr_blue_suit_v2","sr_ultramarine_suit","gn_hoodie","sr_black_suit_v2",
+"saturn_sweater","sr_aquamarine_suit_v2","sr_pink_suit_v2","terra_turtleneck",
+"blue_college_jacket","sr_purple_suit","sr_red_suit","sr_green_suit",
+"star_glow","srog_hoodie","black_sport_hoodie","sr_ultramarine_suit_v2",
+"sr_purple_suit_v2","black_turtleneck","sr_green_suit_v2",
+"legendary_space_hoodie","tuxedo","peaky_suit","red_college_jacket",
+"sr_light_purple_suit_v2","sr_white_suit","dark_cloak","heavy_hoodie",
+"blue_turtleneck","saturn_overalls","poncho","captain_suit","rider_jacket",
+"sr_aquamarine_suit","space_rider","doodle_wave","blue_sport_hoodie",
+"moon_overalls","sr_white_suit_v2","sr_black_suit","sr_red_suit_v2",
+"star_hoodie","sr_blue_suit","yellow_bomber_jacket","purple_sr_hoodie",
+"sr_light_purple_suit","grey_cape","sr_pink_suit","sr_hoodie","cloak",
+"old_legendary_turtleneck","sr_icon_hoodie","divine_robe","suspenders",
+"moon_sweater","pink_turtleneck","pink_bomber_jacket","sr_yellow_suit_v2",
+"sr_orange_suit","black_star_hoodie","purple_turtleneck","sr_orange_suit_v2",
+"riders_hoodie","srgg_hoodie","ninja_suit","viking_suit","sheriff",
+"zip_up_hoodie","sr_yellow_suit","gm_hoodie","red_sport_hoodie",
+"swim_suit","hippie_suit","kimono","samurai_suit","purple_cape",
+"pirate","srgg_uniform","s3r0_suit","intergalactic_uniform"
+],
+
+head:[
+"robot","deep_sea","jupiter","deep_space","light_purple","light_green",
+"solar_flare","blush","red","sky","blue_marble","mint","blue_bowling_ball",
+"purple","pink","water_bowl","sun","blood_moon","nova","tennis_ball",
+"white","red_marble","purple_bowling_ball","watermelon","orange","melting",
+"slam_dunk","blue","green","lavender","open_sea","s3r0_head","silver",
+"yellow","home_run","golden","red_bowling_ball","transparent",
+"ultramarine","purple_marble","yellow_marble","lemon"
+],
+
+eyes:[
+"normal","third_eye","patch",
+"messed_up","happy","in_love","roboface","evil","dot","scarface"
+],
+
+mouth:[
+"mustache","regular","drool","cigarette","lollipop","smile","joint","bubble_gum"
+],
+
+hat:[
+"blue_cap","horns","olive_crown","headphones","purple_bandana","sr_planet",
+"planetary_cap","home_planet","red_cap","red_bandana","pink_cap",
+"hippie_bandana","halo","captain","pink_beanie","yellow_beanie","kitsune",
+"headband","mohawk","visor","grey_beanie","lollipop","elegant_hat",
+"blue_bucket_hat","ninja_band","viking_helmet","purple_cap","ufo",
+"trucker_hat","beret","black_trucker_hat","black_cap","nova_bucket_hat",
+"chocolate","black_crown","black_bucket_hat","pirate","punk","cowboy",
+"crown","saturn","sheriff","peaky_hat","ronin_helmet",
+"construction_helmet","lord_of_terror","swim_cap","ninja_mask",
+"sombrero","wizard"
+],
+
+glasses:["monocle","regular","rocketman","vr","vb","gradient"],
+
+space_shine:["black","white"]
+
+}; // ✅ correctly close TRAITS
+  
+const SPECIAL_BACKGROUNDS = [
+"tatooine","death_star","space_ship_2","metallic_rider",
+"riders_gonna_ride","planet_1","planet_2","dark_space","beach",
+"jungle","squid_game","sky","void","solarflare","spaceship_1",
+"grey","starry_night","beach_2","rainbow","pink_void",
+"rider_special_blue","blue_void","ikuzo","rider_special_dark","green_void","cab_special",
+"surf","chrome","grail","blurr","vanilla_sky","dark_ride","starry","diamond","gold","rink","spaceport",
+"japan","moon","cyberpunk",
+];
+
+const OVERLAYS = [
+"rainbow_morning_1","rainbow_morning_2","rider_morning","chrome_ride","grail_ride",
+"vanilla_sky_morning","gradient_morning","chrome_morning","grail_morning",
+
+];
+
+const NHL_TEAMS = [
+"anaheim_ducks",
+"arizona_coyotes",
+"boston_bruins",
+"buffalo_sabres",
+"calgary_flames",
+"carolina_hurricanes",
+"chicago_blackhawks",
+"colorado_avalanche",
+"columbus_blue_jackets",
+"dallas_stars",
+"detroit_red_wings",
+"edmonton_oilers",
+"florida_panthers",
+"los_angeles_kings",
+"minnesota_wild",
+"montreal_canadiens",
+"nashville_predators",
+"new_jersey_devils",
+"new_york_islanders",
+"new_york_rangers",
+"ottawa_senators",
+"philadelphia_flyers",
+"pittsburgh_penguins",
+"san_jose_sharks",
+"seattle_kraken",
+"st_louis_blues",
+"tampa_bay_lightning",
+"toronto_maple_leafs",
+"vancouver_canucks",
+"vegas_golden_knights",
+"washington_capitals",
+"winnipeg_jets"
+];
+
+/* populate dropdowns */
+for(const key in TRAITS){
+const select = document.getElementById(key);
+select.innerHTML = '<option value="">'+key+'</option>';
+
+TRAITS[key].forEach(value=>{
+const option = document.createElement("option");
+option.value = value;
+option.textContent = value.replace(/_/g," ");
+select.appendChild(option);
+});
+}
+
+/* ===== GLOBAL STATE ===== */
+
+window.renderState = {
+  mode: null,
+  data: null,
+  builder: null,
+  bgVisible: true,
+  overlay: null,
+  specialBG: null,
+  nhl: null
+};
+
+/* ===== CANVAS ===== */
+
+const canvas = document.createElement("canvas");
+canvas.width = 2000;
+canvas.height = 2000;
+const ctx = canvas.getContext("2d");
+
+const img = document.getElementById("finalImage");
+const load = document.getElementById("loading");
+const genBtn = document.getElementById("genBtn");
+
+/* ===== HELPERS ===== */
+
+const BASE = "https://ipfs.io/ipfs/Qma8e3QrAWVg4buufjUyLjFbjWJ7PKKNzehAct7kxgDFT6/";
+const order = ["background","shadow","body","head","cheeks","eyes","mouth","hat","glasses","space_shine"];
+
+function clean(str){
+  return str.toLowerCase().replace(/ /g,"_").replace(/[^a-z0-9_]/g,"");
+}
+
+function draw(src){
+  return new Promise(res=>{
+    const i = new Image();
+    i.crossOrigin = "anonymous"; // important for canvas export
+    i.src = BASE + src; // 🚀 THIS WAS MISSING
+
+    i.onload = ()=>{
+      ctx.drawImage(i,0,0,2000,2000);
+      res();
+    };
+
+    i.onerror = ()=>{
+      console.warn("Missing:", BASE + src);
+      res();
+    };
+  });
+}
+
+function getTrait(layer){
+  if(window.renderState.mode === "nft"){
+    const t = window.renderState.data.attributes.find(
+      a => a.trait_type.toLowerCase().replace(/ /g,"_") === layer
+    );
+    return t ? clean(t.value) : null;
+  } else {
+    return window.renderState.builder[layer] || null;
+  }
+}
+
+/* ===== MAIN RENDER ===== */
+
+async function render(){
+
+  ctx.clearRect(0,0,2000,2000);
+
+  /* ===== BACKGROUND ===== */
+  if(window.renderState.specialBG){
+    await draw("traits/special_backgrounds/" + window.renderState.specialBG + ".png");
+  } else if(window.renderState.bgVisible){
+    const bg = getTrait("background");
+    if(bg) await draw("traits/background/" + bg + ".png");
+  }
+
+  /* ===== BASE LAYERS ===== */
+  for(const l of order){
+
+    if(l === "background") continue;
+
+    // NHL override
+    if(window.renderState.nhl && (l === "body" || l === "hat")) continue;
+
+    if(l === "shadow"){
+      await draw("traits/shadow/default.png");
+      continue;
+    }
+
+    if(l === "cheeks"){
+      await draw("traits/cheeks/default.png");
+      continue;
+    }
+
+    if(l === "glasses" || l === "space_shine") continue;
+
+    const val = getTrait(l);
+    if(val){
+      await draw("traits/"+l+"/"+val+".png");
+    }
+  }
+
+  /* ===== OVERLAY ===== */
+  if(window.renderState.overlay){
+    await draw("traits/overlays/" + window.renderState.overlay + ".png");
+  }
+
+  /* ===== NHL ===== */
+  if(window.renderState.nhl){
+    await draw("traits/nhl/" + window.renderState.nhl + ".png");
+  }
+
+  /* ===== GLASSES (ALWAYS TOP) ===== */
+  const glasses = getTrait("glasses");
+  if(glasses){
+    await draw("traits/glasses/" + glasses + ".png");
+  }
+
+  /* ===== SPACE SHINE (ONLY IF NHL) ===== */
+  if(window.renderState.nhl){
+    const shine = getTrait("space_shine");
+    if(shine){
+      await draw("traits/space_shine/" + shine + ".png");
+    }
+  }
+
+  img.src = canvas.toDataURL();
+img.style.display = "block";
+img.style.opacity = 1;
+
+}
+
+/* ===== GENERATE NFT ===== */
+
+async function generate(){
+
+  const id = document.getElementById("nftInput").value;
+  if(!id) return alert("Enter ID");
+
+  load.style.display = "flex";
+
+  try{
+    const res = await fetch(BASE + id + ".json");
+    const data = await res.json();
+
+    window.renderState = {
+      mode: "nft",
+      data: data,
+      builder: null,
+      bgVisible: true,
+      overlay: null,
+      specialBG: null,
+      nhl: null
+    };
+
+    await render();
+
+  }catch(e){
+    alert("Failed to load NFT");
+  }
+
+  load.style.display = "none";
+}
+
+/* ===== BUILDER ===== */
+
+async function generateCustom(){
+
+  const builder = {};
+
+  for(const l of order){
+    builder[l] = document.getElementById(l)?.value;
+  }
+
+  window.renderState = {
+    mode: "builder",
+    data: null,
+    builder: builder,
+    bgVisible: true,
+    overlay: null,
+    specialBG: null,
+    nhl: null
+  };
+
+  load.style.display="flex";
+  await render();
+  load.style.display="none";
+}
+
+/* ===== CONTROLS ===== */
+
+function toggleBackground(){
+  window.renderState.bgVisible = !window.renderState.bgVisible;
+  render();
+}
+
+function applyOverlay(){
+  window.renderState.overlay = document.getElementById("overlay_select").value || null;
+  render();
+}
+
+function applySpecialBackground(){
+  window.renderState.specialBG = document.getElementById("special_bg_select").value || null;
+  render();
+}
+
+function applyNHL(){
+  window.renderState.nhl = document.getElementById("nhl_select").value || null;
+  render();
+}
+
+function download(){
+  const a = document.createElement("a");
+  a.href = canvas.toDataURL();
+  a.download = "rider.png";
+  a.click();
+}
+
+function randomRider(){
+  document.getElementById("nftInput").value = Math.floor(Math.random()*8888);
+  generate();
+}
+window.addEventListener("load", () => {
+
+  /* ===== SPECIAL BACKGROUNDS ===== */
+  const special = document.getElementById("special_bg_select");
+
+  SPECIAL_BACKGROUNDS.forEach(bg=>{
+    const option = document.createElement("option");
+    option.value = bg;
+    option.textContent = bg.replace(/_/g," ");
+    special.appendChild(option);
+  });
+
+  /* ===== OVERLAYS ===== */
+  const overlay = document.getElementById("overlay_select");
+
+  OVERLAYS.forEach(o=>{
+    const option = document.createElement("option");
+    option.value = o;
+    option.textContent = o.replace(/_/g," ");
+    overlay.appendChild(option);
+  });
+
+  /* ===== NHL ===== */
+  const nhl = document.getElementById("nhl_select");
+
+  NHL_TEAMS.forEach(team=>{
+    const option = document.createElement("option");
+    option.value = team;
+    option.textContent = team.replace(/_/g," ");
+    nhl.appendChild(option);
+  });
+
+});
+
+</script>
+
+</body>
+</html>
